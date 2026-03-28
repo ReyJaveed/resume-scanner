@@ -1,5 +1,5 @@
 import streamlit as st
-import PyPDF2
+import pypdf
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -7,7 +7,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 # Function to extract text from PDF
 # -------------------------------
 def extract_text(file):
-    reader = PyPDF2.PdfReader(file)
+    reader = pypdf.PdfReader(file)
     text = ""
     for page in reader.pages:
         if page.extract_text():
