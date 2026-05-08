@@ -1,156 +1,235 @@
 import streamlit as st
 import pypdf
 import time
-import base64
 import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# ----------------------------------------------------
+# ---------------------------------------------------
 # PAGE CONFIG
-# ----------------------------------------------------
+# ---------------------------------------------------
 st.set_page_config(
     page_title="Supermentor Technologies",
     page_icon="🏢",
     layout="wide"
 )
 
-# ----------------------------------------------------
-# BACKGROUND IMAGE FUNCTION
-# ----------------------------------------------------
-def add_bg_from_url():
+# ---------------------------------------------------
+# CUSTOM CSS
+# ---------------------------------------------------
+st.markdown("""
+<style>
 
-    st.markdown(
-        f"""
-        <style>
+/* MAIN APP */
+.stApp {
+    background: linear-gradient(to bottom right, #f8fbff, #eef4ff);
+}
 
-        .stApp {{
-            background-image: url("https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5");
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }}
+/* REMOVE DEFAULT PADDING */
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
 
-        .main-container {{
-            background: rgba(15, 23, 42, 0.88);
-            padding: 30px;
-            border-radius: 20px;
-        }}
+/* HEADINGS */
+.main-title {
+    font-size: 55px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0;
+}
 
-        h1, h2, h3 {{
-            color: #38bdf8;
-            text-align: center;
-        }}
+.sub-title {
+    font-size: 34px;
+    font-weight: 700;
+    color: #2563eb;
+    margin-top: 0;
+}
 
-        p {{
-            color: white;
-        }}
+.description {
+    font-size: 20px;
+    color: #475569;
+    margin-top: 10px;
+}
 
-        .stTextArea textarea {{
-            border-radius: 10px;
-            background-color: #1e293b;
-            color: white;
-        }}
+/* CARD */
+.card {
+    background-color: white;
+    padding: 30px;
+    border-radius: 25px;
+    box-shadow: 0px 8px 25px rgba(0,0,0,0.08);
+    margin-top: 30px;
+}
 
-        .stFileUploader {{
-            background-color: rgba(30,41,59,0.8);
-            padding: 15px;
-            border-radius: 10px;
-        }}
+/* BUTTON */
+.stButton>button {
+    background: linear-gradient(to right, #2563eb, #4f46e5);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    height: 55px;
+    width: 100%;
+    font-size: 22px;
+    font-weight: 600;
+}
 
-        .stButton>button {{
-            background: linear-gradient(to right, #0ea5e9, #38bdf8);
-            color: white;
-            border-radius: 12px;
-            height: 50px;
-            width: 100%;
-            font-size: 18px;
-            border: none;
-        }}
+.stButton>button:hover {
+    background: linear-gradient(to right, #1d4ed8, #4338ca);
+    color: white;
+}
 
-        .stButton>button:hover {{
-            background: linear-gradient(to right, #0284c7, #0ea5e9);
-        }}
+/* TEXT AREA */
+.stTextArea textarea {
+    border-radius: 15px;
+    border: 2px solid #dbeafe;
+    font-size: 16px;
+}
 
-        .result-box {{
-            background-color: rgba(30,41,59,0.9);
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            color: white;
-            font-size: 24px;
-            margin-top: 20px;
-        }}
+/* FILE UPLOADER */
+.stFileUploader {
+    border: 2px dashed #93c5fd;
+    border-radius: 15px;
+    padding: 15px;
+    background-color: #f8fbff;
+}
 
-        .footer {{
-            text-align: center;
-            color: lightgray;
-            margin-top: 40px;
-            font-size: 15px;
-        }}
+/* RESULT BOX */
+.result-box {
+    background: linear-gradient(to right, #2563eb, #4f46e5);
+    padding: 25px;
+    border-radius: 20px;
+    text-align: center;
+    color: white;
+    font-size: 30px;
+    font-weight: bold;
+    margin-top: 25px;
+}
 
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+/* FEATURE BOXES */
+.feature-box {
+    background-color: white;
+    padding: 25px;
+    border-radius: 18px;
+    text-align: center;
+    box-shadow: 0px 5px 15px rgba(0,0,0,0.05);
+    height: 200px;
+}
 
-add_bg_from_url()
+/* FOOTER */
+.footer {
+    text-align: center;
+    margin-top: 50px;
+    color: #64748b;
+    font-size: 16px;
+    font-weight: 500;
+}
 
-# ----------------------------------------------------
+/* SIDEBAR */
+section[data-testid="stSidebar"] {
+    background: white;
+    border-right: 1px solid #e2e8f0;
+}
+
+.sidebar-title {
+    font-size: 34px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.sidebar-subtitle {
+    color: #2563eb;
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+.sidebar-text {
+    color: #334155;
+    font-size: 16px;
+    line-height: 1.7;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------------------------------------------
 # SIDEBAR
-# ----------------------------------------------------
-st.sidebar.title("🏢 Supermentor Technologies")
-
-st.sidebar.info(
+# ---------------------------------------------------
+st.sidebar.markdown(
     """
-    ### Intelligent Resume Matching System
+    <div class="sidebar-title">
+    🏢 Supermentor Technologies
+    </div>
 
-    This AI-powered recruitment platform analyzes resumes and compares them with job descriptions using NLP techniques and Machine Learning algorithms.
-
-    ### Features
-    ✅ Resume Analysis  
-    ✅ Skill Detection  
-    ✅ Match Score  
-    ✅ Recommendation Engine  
-    ✅ Analytics Visualization  
-    """
-)
-
-st.sidebar.success("System Status: Active")
-
-# ----------------------------------------------------
-# MAIN CONTAINER
-# ----------------------------------------------------
-st.markdown('<div class="main-container">', unsafe_allow_html=True)
-
-# ----------------------------------------------------
-# HEADER
-# ----------------------------------------------------
-st.markdown(
-    "<h1>🏢 Supermentor Technologies</h1>",
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    "<h2>Intelligent Resume Matching System using NLP Techniques</h2>",
-    unsafe_allow_html=True
-)
-
-st.markdown("---")
-
-st.markdown(
-    """
-    <p style='text-align:center; font-size:18px;'>
-    AI-powered recruitment dashboard for resume analysis and intelligent candidate matching.
-    </p>
+    <div class="sidebar-subtitle">
+    AI For Smarter Hiring
+    </div>
     """,
     unsafe_allow_html=True
 )
 
-# ----------------------------------------------------
+st.sidebar.markdown("---")
+
+st.sidebar.markdown(
+    """
+    <div class="sidebar-text">
+    <b>ABOUT PROJECT</b><br><br>
+
+    This AI-powered recruitment platform analyzes resumes and matches them with job descriptions using advanced NLP and Machine Learning techniques.
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+st.sidebar.markdown("---")
+
+st.sidebar.success("✅ System Status: Active")
+
+# ---------------------------------------------------
+# HEADER
+# ---------------------------------------------------
+col1, col2 = st.columns([3,1])
+
+with col1:
+
+    st.markdown(
+        """
+        <div class="main-title">
+        Supermentor Technologies
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        """
+        <div class="sub-title">
+        AI-Powered Recruitment & Resume Matching System
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        """
+        <div class="description">
+        Intelligent resume screening and candidate matching platform using Natural Language Processing and Machine Learning algorithms.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with col2:
+    st.image(
+        "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+        width=180
+    )
+
+# ---------------------------------------------------
 # PDF TEXT EXTRACTION
-# ----------------------------------------------------
+# ---------------------------------------------------
 def extract_text(file):
 
     reader = pypdf.PdfReader(file)
@@ -164,9 +243,9 @@ def extract_text(file):
 
     return text
 
-# ----------------------------------------------------
+# ---------------------------------------------------
 # SIMILARITY FUNCTION
-# ----------------------------------------------------
+# ---------------------------------------------------
 def get_similarity(resume, jd):
 
     vectorizer = TfidfVectorizer()
@@ -177,9 +256,9 @@ def get_similarity(resume, jd):
 
     return score[0][0]
 
-# ----------------------------------------------------
+# ---------------------------------------------------
 # SKILLS EXTRACTION
-# ----------------------------------------------------
+# ---------------------------------------------------
 def extract_skills(text):
 
     skills_list = [
@@ -191,10 +270,10 @@ def extract_skills(text):
         "css",
         "javascript",
         "nlp",
-        "data analysis",
-        "communication",
         "cloud computing",
-        "aws"
+        "aws",
+        "communication",
+        "data analysis"
     ]
 
     found_skills = []
@@ -208,29 +287,43 @@ def extract_skills(text):
 
     return found_skills
 
-# ----------------------------------------------------
-# INPUTS
-# ----------------------------------------------------
-resume = st.file_uploader(
-    "📄 Upload Resume (PDF)",
-    type="pdf"
-)
+# ---------------------------------------------------
+# MAIN CARD
+# ---------------------------------------------------
+st.markdown('<div class="card">', unsafe_allow_html=True)
 
-if resume is not None:
-    st.success("✅ Resume uploaded successfully!")
+col1, col2 = st.columns(2)
 
-jd = st.text_area(
-    "📝 Enter Job Description"
-)
+with col1:
 
-# ----------------------------------------------------
+    st.subheader("📄 Upload Resume (PDF)")
+
+    resume = st.file_uploader(
+        "",
+        type="pdf"
+    )
+
+    if resume is not None:
+        st.success("✅ Resume uploaded successfully!")
+
+with col2:
+
+    st.subheader("📝 Enter Job Description")
+
+    jd = st.text_area(
+        "",
+        height=250,
+        placeholder="Paste the job description here..."
+    )
+
+st.markdown("<br>", unsafe_allow_html=True)
+
 # BUTTON
-# ----------------------------------------------------
 if st.button("🚀 Analyze Resume"):
 
     if resume is not None and jd.strip() != "":
 
-        with st.spinner("Analyzing resume using AI models..."):
+        with st.spinner("Analyzing Resume using AI..."):
 
             time.sleep(2)
 
@@ -240,36 +333,30 @@ if st.button("🚀 Analyze Resume"):
 
             skills = extract_skills(resume_text)
 
-        # ----------------------------------------------------
-        # SCORE BOX
-        # ----------------------------------------------------
+        # RESULT BOX
         st.markdown(
             f"""
             <div class="result-box">
-            ✅ Match Score: <b>{round(score * 100, 2)}%</b>
+            Match Score: {round(score * 100, 2)}%
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        # ----------------------------------------------------
         # PROGRESS BAR
-        # ----------------------------------------------------
         st.progress(int(score * 100))
 
-        # ----------------------------------------------------
+        st.markdown("<br>", unsafe_allow_html=True)
+
         # SKILLS
-        # ----------------------------------------------------
         st.subheader("🎯 Skills Identified")
 
         if skills:
             st.success(", ".join(skills))
         else:
-            st.warning("No predefined skills identified")
+            st.warning("No predefined skills found")
 
-        # ----------------------------------------------------
         # PIE CHART
-        # ----------------------------------------------------
         if skills:
 
             fig, ax = plt.subplots()
@@ -284,9 +371,7 @@ if st.button("🚀 Analyze Resume"):
 
             st.pyplot(fig)
 
-        # ----------------------------------------------------
         # RECOMMENDATION
-        # ----------------------------------------------------
         st.subheader("📌 Recommendation")
 
         if score > 0.7:
@@ -299,18 +384,90 @@ if st.button("🚀 Analyze Resume"):
             st.error("Low Match for Job Role")
 
     else:
-        st.error("⚠️ Please upload resume and enter job description.")
+        st.error("Please upload resume and enter job description.")
 
-# ----------------------------------------------------
+st.markdown('</div>', unsafe_allow_html=True)
+
+# ---------------------------------------------------
+# FEATURES SECTION
+# ---------------------------------------------------
+st.markdown("<br><br>", unsafe_allow_html=True)
+
+st.markdown(
+    """
+    <h2 style='text-align:center; color:#0f172a;'>
+    Why Choose Our AI Recruitment Platform?
+    </h2>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+f1, f2, f3, f4 = st.columns(4)
+
+with f1:
+    st.markdown(
+        """
+        <div class="feature-box">
+        <h3>🧠 Advanced NLP</h3>
+        <p>
+        Uses Natural Language Processing for intelligent resume analysis.
+        </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with f2:
+    st.markdown(
+        """
+        <div class="feature-box">
+        <h3>🎯 Accurate Matching</h3>
+        <p>
+        Machine learning algorithms provide highly accurate matching scores.
+        </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with f3:
+    st.markdown(
+        """
+        <div class="feature-box">
+        <h3>📊 Analytics</h3>
+        <p>
+        Visual insights and analytics for better candidate evaluation.
+        </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with f4:
+    st.markdown(
+        """
+        <div class="feature-box">
+        <h3>🔒 Secure Platform</h3>
+        <p>
+        Secure and scalable AI-powered recruitment platform.
+        </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ---------------------------------------------------
 # FOOTER
-# ----------------------------------------------------
+# ---------------------------------------------------
 st.markdown(
     """
     <div class="footer">
-    Developed by Reya Javid | Supermentor Technologies | Internship Project 2026
+    © 2026 Supermentor Technologies | Developed by Reya Javid
     </div>
     """,
     unsafe_allow_html=True
 )
 
-st.markdown('</div>', unsafe_allow_html=True)
+
