@@ -357,19 +357,18 @@ if st.button("🚀 Analyze Resume"):
             st.warning("No predefined skills found")
 
         # PIE CHART
-        if skills:
+        st.subheader("🎯 Skills Identified")
 
-            fig, ax = plt.subplots()
+if skills:
 
-            ax.pie(
-                [1] * len(skills),
-                labels=skills,
-                autopct='%1.1f%%'
-            )
+    cols = st.columns(len(skills))
 
-            st.subheader("📊 Skills Distribution")
+    for i, skill in enumerate(skills):
 
-            st.pyplot(fig)
+        cols[i].success(skill.upper())
+
+else:
+    st.warning("No predefined skills found")
 
         # RECOMMENDATION
         st.subheader("📌 Recommendation")
@@ -469,5 +468,3 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-
