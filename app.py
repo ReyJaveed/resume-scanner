@@ -1,7 +1,6 @@
 import streamlit as st
 import pypdf
 import time
-import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -318,7 +317,9 @@ with col2:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# BUTTON
+# ---------------------------------------------------
+# ANALYZE BUTTON
+# ---------------------------------------------------
 if st.button("🚀 Analyze Resume"):
 
     if resume is not None and jd.strip() != "":
@@ -352,23 +353,15 @@ if st.button("🚀 Analyze Resume"):
         st.subheader("🎯 Skills Identified")
 
         if skills:
-            st.success(", ".join(skills))
+
+            cols = st.columns(len(skills))
+
+            for i, skill in enumerate(skills):
+
+                cols[i].success(skill.upper())
+
         else:
             st.warning("No predefined skills found")
-
-        # PIE CHART
-        st.subheader("🎯 Skills Identified")
-
-if skills:
-
-    cols = st.columns(len(skills))
-
-    for i, skill in enumerate(skills):
-
-        cols[i].success(skill.upper())
-
-else:
-    st.warning("No predefined skills found")
 
         # RECOMMENDATION
         st.subheader("📌 Recommendation")
